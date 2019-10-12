@@ -59,8 +59,8 @@ func TestSubscribeAddress_EOS(t *testing.T) {
 		endRunning = make(chan bool, 1)
 		symbol     = "EOS"
 		addrs = map[string]string{
-			"zgbnpn3aybgl": "sender",
-			"eospokedice1": "receiver",
+			"gqzdanjsgene": "sender",
+			"axxlocal1234": "receiver",
 		}
 	)
 
@@ -96,7 +96,7 @@ func TestSubscribeAddress_EOS(t *testing.T) {
 
 	//log.Debug("already got scanner:", assetsMgr)
 	scanner := assetsMgr.GetBlockScanner()
-	scanner.SetRescanBlockHeight(61824831)
+	scanner.SetRescanBlockHeight(	80869873)
 
 	if scanner == nil {
 		log.Error(symbol, "is not support block scan")

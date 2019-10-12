@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"time"
 
 	"github.com/blocktree/openwallet/common"
@@ -425,18 +426,35 @@ func (bs *EOSBlockScanner) InitExtractResult(sourceKey string, action TransferAc
 	amount := common.NewString(data.Quantity.Amount).String()
 
 	contractID := openwallet.GenContractID(bs.wm.Symbol(), string(action.Account)+":"+symbol)
-	coin := openwallet.Coin{
-		Symbol:     bs.wm.Symbol(),
-		IsContract: true,
-		ContractID: contractID,
+
+	//将 eosio.token 转换为主币eos,并处理精度 其它token不用处理
+    var coin openwallet.Coin
+	if action.Account == "eosio.token" {
+		coin = openwallet.Coin{
+			Symbol:     bs.wm.Symbol(),
+			IsContract:false,
+		}
+		//转换amount 对应精度数字
+		transAmount ,_:= decimal.NewFromString(amount)
+		transDecimals := decimal.New(1,decimals)
+		amount = transAmount.Div(transDecimals).String()
+
+	}else {
+		coin = openwallet.Coin{
+			Symbol:     bs.wm.Symbol(),
+			IsContract: true,
+			ContractID: contractID,
+		}
+		coin.Contract = openwallet.SmartContract{
+			Symbol:     bs.wm.Symbol(),
+			ContractID: contractID,
+			Address:    string(action.Account) + ":" + symbol,
+			Token:      symbol,
+		}
+
 	}
 
-	coin.Contract = openwallet.SmartContract{
-		Symbol:     bs.wm.Symbol(),
-		ContractID: contractID,
-		Address:    string(action.Account) + ":" + symbol,
-		Token:      symbol,
-	}
+
 
 	transx := &openwallet.Transaction{
 		Fees:        "0",
@@ -452,9 +470,10 @@ func (bs *EOSBlockScanner) InitExtractResult(sourceKey string, action TransferAc
 		IsMemo:      true,
 		Status:      status,
 		Reason:      reason,
+		Confirm:    1,
 	}
 
-	transx.SetExtParam("memo", data.Memo)
+	//transx.SetExtParam("memo", data.Memo)
 
 	wxID := openwallet.GenTransactionWxID(transx)
 	transx.WxID = wxID
@@ -488,8 +507,8 @@ func (bs *EOSBlockScanner) extractTxInput(action TransferAction, txExtractData *
 	txInput.Recharge.Coin = coin
 	txInput.Recharge.Amount = tx.Amount
 	txInput.Recharge.Symbol = coin.Symbol
-	//txInput.Recharge.IsMemo = true
-	//txInput.Recharge.Memo = data.Memo
+	txInput.Recharge.IsMemo = true
+	txInput.Recharge.Memo = data.Memo
 	txInput.Recharge.BlockHash = tx.BlockHash
 	txInput.Recharge.BlockHeight = tx.BlockHeight
 	txInput.Recharge.Index = 0 //账户模型填0
@@ -512,8 +531,8 @@ func (bs *EOSBlockScanner) extractTxOutput(action TransferAction, txExtractData 
 	txOutput.Recharge.Coin = coin
 	txOutput.Recharge.Amount = tx.Amount
 	txOutput.Recharge.Symbol = coin.Symbol
-	//txOutput.Recharge.IsMemo = true
-	//txOutput.Recharge.Memo = data.Memo
+	txOutput.Recharge.IsMemo = true
+	txOutput.Recharge.Memo = data.Memo
 	txOutput.Recharge.BlockHash = tx.BlockHash
 	txOutput.Recharge.BlockHeight = tx.BlockHeight
 	txOutput.Recharge.Index = 0 //账户模型填0
@@ -644,6 +663,15 @@ func (bs *EOSBlockScanner) GetScannedBlockHeight() uint64 {
 func (bs *EOSBlockScanner) GetBalanceByAddress(address ...string) ([]*openwallet.Balance, error) {
 
 	addrBalanceArr := make([]*openwallet.Balance, 0)
+	for _,addr := range address {
+		accountAssets,err:= bs.wm.Api.GetCurrencyBalance(eos.AccountName(addr),Symbol, eos.AccountName("eosio.token"))
+		if err != nil{
+		  return nil,err
+		}
+		convertAmount :=common.IntToDecimals(int64(accountAssets[0].Amount),int32(accountAssets[0].Precision))
+		addrBalanceArr = append(addrBalanceArr, &openwallet.Balance{Symbol:Symbol,Balance:convertAmount.String()})
+	}
+
 
 	return addrBalanceArr, nil
 }

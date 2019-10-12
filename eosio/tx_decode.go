@@ -60,12 +60,27 @@ func (decoder *TransactionDecoder) CreateRawTransaction(wrapper openwallet.Walle
 		tokenCoin      string
 	)
 
-	addr := strings.Split(rawTx.Coin.Contract.Address, ":")
-	if len(addr) != 2 {
-		return fmt.Errorf("token contract's address is invalid: %s", rawTx.Coin.Contract.Address)
+	//没有传contract表示为eosio.token
+	if rawTx.Coin.Contract.Address =="" {
+		rawTx.Coin.Contract = openwallet.SmartContract{
+			Address:  "eosio.token:EOS",
+			Symbol:   "EOS",
+			Name:     "EOS",
+			Token:    "EOS",
+			Decimals: 4,
+		}
 	}
-	codeAccount = addr[0]
-	tokenCoin = strings.ToUpper(addr[1])
+
+	addr := strings.Split(rawTx.Coin.Contract.Address, ":")
+
+
+
+		if len(addr) != 2 {
+			return fmt.Errorf("token contract's address is invalid: %s", rawTx.Coin.Contract.Address)
+		}
+		codeAccount = addr[0]
+		tokenCoin = strings.ToUpper(addr[1])
+
 
 	//获取wallet
 	account, err := wrapper.GetAssetsAccountInfo(accountID)
@@ -316,6 +331,16 @@ func (decoder *TransactionDecoder) CreateSummaryRawTransactionWithError(wrapper 
 	minTransfer, _ := decimal.NewFromString(sumRawTx.MinTransfer)
 	retainedBalance, _ := decimal.NewFromString(sumRawTx.RetainedBalance)
 
+	//没有传contract表示为eosio.token
+	if sumRawTx.Coin.Contract.Address =="" {
+		sumRawTx.Coin.Contract = openwallet.SmartContract{
+			Address:  "eosio.token:EOS",
+			Symbol:   "EOS",
+			Name:     "EOS",
+			Token:    "EOS",
+			Decimals: 4,
+		}
+	}
 	addr := strings.Split(sumRawTx.Coin.Contract.Address, ":")
 	if len(addr) != 2 {
 		return nil, fmt.Errorf("token contract's address is invalid: %s", sumRawTx.Coin.Contract.Address)
