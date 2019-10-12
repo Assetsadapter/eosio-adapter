@@ -1,4 +1,4 @@
-module github.com/blocktree/eosio-adapter
+module github.com/cyberskycat/eosio-adapter
 
 require (
 	github.com/asdine/storm v2.1.2+incompatible
