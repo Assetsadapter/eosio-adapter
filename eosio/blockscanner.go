@@ -105,6 +105,7 @@ func (bs *EOSBlockScanner) ScanBlockTask() {
 		headBlock, err := bs.GetGlobalHeadBlock()
 		if err != nil {
 			bs.wm.Log.Std.Info("get head block error, err=%v", err)
+			return
 		}
 
 		currentHash = headBlock.Previous.String()
