@@ -1,7 +1,7 @@
 package openwtester
 
 import (
-	"github.com/blocktree/eosio-adapter/eosio"
+	"github.com/Assetsadapter/eosio-adapter/eosio"
 	"github.com/blocktree/openwallet/log"
 	"github.com/blocktree/openwallet/openw"
 )

@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blocktree/eosio-adapter/eos_txsigner"
+	"github.com/Assetsadapter/eosio-adapter/eos_txsigner"
 	"github.com/blocktree/go-owcrypt"
 
 	"github.com/eoscanada/eos-go/ecc"

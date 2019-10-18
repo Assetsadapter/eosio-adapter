@@ -1,4 +1,4 @@
-module github.com/cyberskycat/eosio-adapter
+module github.com/Assetsadapter/eosio-adapter
 
 require (
 	github.com/asdine/storm v2.1.2+incompatible
