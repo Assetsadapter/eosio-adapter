@@ -16,6 +16,7 @@
 package openwtester
 
 import (
+	"github.com/blocktree/openwallet/common/file"
 	"path/filepath"
 	"testing"
 
@@ -28,6 +29,7 @@ import (
 ////////////////////////// 测试单个扫描器 //////////////////////////
 
 type subscriberSingle struct {
+	manager *openw.WalletManager
 }
 
 //BlockScanNotify 新区块扫描完成通知
@@ -50,6 +52,22 @@ func (sub *subscriberSingle) BlockExtractDataNotify(sourceKey string, data *open
 
 	log.Std.Notice("data.Transaction: %+v", data.Transaction)
 
+
+	walletID := "WEyoXkvytkkbK7RJLdoS4H7hbdjDAvRXjY"
+	accountID := "2MySbxhZwodeiyG3ehBRgTQPBN3HtaQumByeUNF38QJK"
+
+	contract := openwallet.SmartContract{
+		Address:  "eosio.token:EOS",
+		Symbol:   "EOS",
+		Name:     "EOS",
+		Token:    "EOS",
+		Decimals: 4,
+	}
+
+	balance, _ := sub.manager.GetAssetsAccountTokenBalance(testApp, walletID, accountID, contract)
+
+	log.Std.Notice("account balance: %+v", balance.Balance)
+
 	return nil
 }
 
@@ -58,9 +76,9 @@ func TestSubscribeAddress_EOS(t *testing.T) {
 	var (
 		endRunning = make(chan bool, 1)
 		symbol     = "EOS"
-		addrs = map[string]string{
-			"gqzdanjsgene": "sender",
-			"axxlocal1234": "receiver",
+		addrs      = map[string]string{
+			"hrt3arlcl354": "sender",
+			"chinagogogog": "receiver",
 		}
 	)
 
@@ -96,7 +114,19 @@ func TestSubscribeAddress_EOS(t *testing.T) {
 
 	//log.Debug("already got scanner:", assetsMgr)
 	scanner := assetsMgr.GetBlockScanner()
-	scanner.SetRescanBlockHeight(	80869873)
+
+	if scanner.SupportBlockchainDAI() {
+		file.MkdirAll(dbFilePath)
+		dai, err := openwallet.NewBlockchainLocal(filepath.Join(dbFilePath, dbFileName), true)
+		if err != nil {
+			log.Error("NewBlockchainLocal err: %v", err)
+			return
+		}
+
+		scanner.SetBlockchainDAI(dai)
+	}
+
+	//scanner.SetRescanBlockHeight(94240826)
 
 	if scanner == nil {
 		log.Error(symbol, "is not support block scan")
@@ -105,7 +135,7 @@ func TestSubscribeAddress_EOS(t *testing.T) {
 
 	scanner.SetBlockScanTargetFunc(scanAddressFunc)
 
-	sub := subscriberSingle{}
+	sub := subscriberSingle{manager:tw}
 	scanner.AddObserver(&sub)
 
 	scanner.Run()
